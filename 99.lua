@@ -124,7 +124,7 @@ local function Notify(title, message, duration)
     RoundCorners(note, 8)
     AddStroke(note, 1, Colors.Border)
 
-    local TitleLabel = Create("TextLabel", {
+    Create("TextLabel", {
         Parent = note,
         Position = UDim2.new(0, 12, 0, 10),
         Size = UDim2.new(1, -24, 0, 18),
@@ -137,7 +137,7 @@ local function Notify(title, message, duration)
         ZIndex = 10001,
     })
 
-    local DescLabel = Create("TextLabel", {
+    Create("TextLabel", {
         Parent = note,
         Position = UDim2.new(0, 12, 0, 30),
         Size = UDim2.new(1, -24, 0, 16),
@@ -161,7 +161,6 @@ local function Notify(title, message, duration)
     RoundCorners(Progress, 1)
 
     local totalHeight = 54
-    note.Size = UDim2.new(1, 0, 0, 0)
 
     local fadeIn = TweenService:Create(note, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
         Size = UDim2.new(1, 0, 0, totalHeight)
@@ -178,9 +177,7 @@ local function Notify(title, message, duration)
             Size = UDim2.new(1, 0, 0, 0)
         })
         fadeOut:Play()
-        fadeOut.Completed:Connect(function()
-            note:Destroy()
-        end)
+        fadeOut.Completed:Connect(function() note:Destroy() end)
     end)
 end
 
@@ -194,6 +191,7 @@ local Hub = Create("Frame", {
     BorderSizePixel = 0,
     ClipsDescendants = true,
     ZIndex = 1000,
+    Visible = true,
 })
 RoundCorners(Hub, 10)
 AddStroke(Hub, 1.5, Colors.Border)
@@ -239,7 +237,7 @@ local Logo = Create("TextLabel", {
     ZIndex = 1002,
 })
 
-local LogoVersion = Create("TextLabel", {
+Create("TextLabel", {
     Parent = TopBar,
     Position = UDim2.new(0, 102, 0, 23),
     Size = UDim2.new(0, 40, 0, 12),
@@ -290,30 +288,30 @@ end
 local MinimizeBtn = CreateWinBtn(0, Color3.fromRGB(240, 180, 50), "─")
 local CloseBtn = CreateWinBtn(28, Colors.Danger, "✕")
 
+local hubVisibleState = true
+
 CloseBtn.MouseButton1Click:Connect(function()
+    hubVisibleState = false
     TweenService:Create(Hub, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
         Size = UDim2.new(0, 0, 0, 0),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
     }):Play()
     task.wait(0.3)
     Hub.Visible = false
 end)
 
 local minimized = false
-local HubOriginalSize = Hub.Size
-local HubOriginalPos = Hub.Position
+local HubOriginalSize = UDim2.new(0, 680, 0, 440)
+local HubOriginalPos = UDim2.new(0.5, -340, 0.5, -220)
 
 MinimizeBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
     if minimized then
         TweenService:Create(Hub, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Size = UDim2.new(0, 680, 0, 40),
-            Position = UDim2.new(0.5, -340, 0, 10),
         }):Play()
     else
         TweenService:Create(Hub, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Size = HubOriginalSize,
-            Position = HubOriginalPos,
         }):Play()
     end
 end)
@@ -330,7 +328,7 @@ local Sidebar = Create("Frame", {
     ZIndex = 1001,
 })
 RoundCorners(Sidebar, 10)
--- Fix top corners (they overlap with TopBar)
+
 local SidebarTopFill = Create("Frame", {
     Parent = Sidebar,
     Position = UDim2.new(0, 0, 0, -10),
@@ -449,7 +447,6 @@ local function AddTab(name, icon)
     TabContent[name] = ContentPage
 
     tabBtn.MouseButton1Click:Connect(function()
-        if not Hub.Visible then return end
         SwitchTab(tabData)
     end)
 
@@ -538,7 +535,7 @@ local function AddToggle(parent, title, desc, default, callback)
     RoundCorners(toggleFrame, 8)
     AddStroke(toggleFrame, 1, Colors.Border)
 
-    local TitleLabel = Create("TextLabel", {
+    Create("TextLabel", {
         Parent = toggleFrame,
         Position = UDim2.new(0, 12, 0, 8),
         Size = UDim2.new(1, -70, 0, 18),
@@ -551,18 +548,20 @@ local function AddToggle(parent, title, desc, default, callback)
         ZIndex = 1002,
     })
 
-    local DescLabel = desc and Create("TextLabel", {
-        Parent = toggleFrame,
-        Position = UDim2.new(0, 12, 0, 26),
-        Size = UDim2.new(1, -70, 0, 14),
-        Text = desc,
-        TextColor3 = Colors.TextDim,
-        Font = Enum.Font.Gotham,
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        BackgroundTransparency = 1,
-        ZIndex = 1002,
-    })
+    if desc then
+        Create("TextLabel", {
+            Parent = toggleFrame,
+            Position = UDim2.new(0, 12, 0, 26),
+            Size = UDim2.new(1, -70, 0, 14),
+            Text = desc,
+            TextColor3 = Colors.TextDim,
+            Font = Enum.Font.Gotham,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            BackgroundTransparency = 1,
+            ZIndex = 1002,
+        })
+    end
 
     local ToggleBg = Create("Frame", {
         Parent = toggleFrame,
@@ -611,10 +610,14 @@ local function AddToggle(parent, title, desc, default, callback)
     end)
 
     toggleFrame.MouseEnter:Connect(function()
-        TweenService:Create(toggleFrame, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Card:Lerp(Color3.new(1,1,1), 0.03)}):Play()
+        TweenService:Create(toggleFrame, TweenInfo.new(0.15), {
+            BackgroundColor3 = Color3.fromRGB(31, 31, 37)
+        }):Play()
     end)
     toggleFrame.MouseLeave:Connect(function()
-        TweenService:Create(toggleFrame, TweenInfo.new(0.2), {BackgroundColor3 = Colors.Card}):Play()
+        TweenService:Create(toggleFrame, TweenInfo.new(0.2), {
+            BackgroundColor3 = Colors.Card
+        }):Play()
     end)
 
     return {
@@ -637,7 +640,7 @@ local function AddButton(parent, title, desc, callback)
     RoundCorners(btnFrame, 8)
     AddStroke(btnFrame, 1, Colors.Border)
 
-    local TitleLabel = Create("TextLabel", {
+    Create("TextLabel", {
         Parent = btnFrame,
         Position = UDim2.new(0, 12, 0, 8),
         Size = UDim2.new(1, -70, 0, 18),
@@ -697,7 +700,6 @@ local function AddButton(parent, title, desc, callback)
         TweenService:Create(ActionBtn, TweenInfo.new(0.2), {BackgroundColor3 = Colors.Accent}):Play()
     end)
 
-    -- Clickable whole frame
     local clickBtn = Create("TextButton", {
         Parent = btnFrame,
         Size = UDim2.new(1, 0, 1, 0),
@@ -712,10 +714,14 @@ local function AddButton(parent, title, desc, callback)
     end)
 
     btnFrame.MouseEnter:Connect(function()
-        TweenService:Create(btnFrame, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Card:Lerp(Color3.new(1,1,1), 0.03)}):Play()
+        TweenService:Create(btnFrame, TweenInfo.new(0.15), {
+            BackgroundColor3 = Color3.fromRGB(31, 31, 37)
+        }):Play()
     end)
     btnFrame.MouseLeave:Connect(function()
-        TweenService:Create(btnFrame, TweenInfo.new(0.2), {BackgroundColor3 = Colors.Card}):Play()
+        TweenService:Create(btnFrame, TweenInfo.new(0.2), {
+            BackgroundColor3 = Colors.Card
+        }):Play()
     end)
 
     return btnFrame
@@ -735,7 +741,7 @@ local function AddSlider(parent, title, desc, min, max, default, callback)
     RoundCorners(sliderFrame, 8)
     AddStroke(sliderFrame, 1, Colors.Border)
 
-    local TitleLabel = Create("TextLabel", {
+    Create("TextLabel", {
         Parent = sliderFrame,
         Position = UDim2.new(0, 12, 0, 8),
         Size = UDim2.new(1, -24, 0, 16),
@@ -869,7 +875,7 @@ local function AddDropdown(parent, title, options, default, callback)
     RoundCorners(ddFrame, 8)
     AddStroke(ddFrame, 1, Colors.Border)
 
-    local TitleLabel = Create("TextLabel", {
+    Create("TextLabel", {
         Parent = ddFrame,
         Position = UDim2.new(0, 12, 0, 8),
         Size = UDim2.new(1, -60, 0, 16),
@@ -942,7 +948,9 @@ local function AddDropdown(parent, title, options, default, callback)
         })
 
         optBtn.MouseEnter:Connect(function()
-            TweenService:Create(optBtn, TweenInfo.new(0.1), {BackgroundColor3 = Colors.Card:Lerp(Color3.new(1,1,1), 0.04)}):Play()
+            TweenService:Create(optBtn, TweenInfo.new(0.1), {
+                BackgroundColor3 = Color3.fromRGB(33, 33, 39)
+            }):Play()
         end)
         optBtn.MouseLeave:Connect(function()
             TweenService:Create(optBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Card}):Play()
@@ -977,7 +985,6 @@ local function AddDropdown(parent, title, options, default, callback)
         end
     end
 
-    -- Reposition dropdown below the frame
     DropdownList.Position = UDim2.new(0, 0, 0, 52)
 
     local clickBtn = Create("TextButton", {
@@ -992,7 +999,9 @@ local function AddDropdown(parent, title, options, default, callback)
     clickBtn.MouseButton1Click:Connect(ToggleDropdown)
 
     ddFrame.MouseEnter:Connect(function()
-        TweenService:Create(ddFrame, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Card:Lerp(Color3.new(1,1,1), 0.03)}):Play()
+        TweenService:Create(ddFrame, TweenInfo.new(0.15), {
+            BackgroundColor3 = Color3.fromRGB(31, 31, 37)
+        }):Play()
     end)
     ddFrame.MouseLeave:Connect(function()
         TweenService:Create(ddFrame, TweenInfo.new(0.2), {BackgroundColor3 = Colors.Card}):Play()
@@ -1017,7 +1026,7 @@ local function AddTextbox(parent, title, placeholder, default, callback)
     RoundCorners(tbFrame, 8)
     AddStroke(tbFrame, 1, Colors.Border)
 
-    local TitleLabel = Create("TextLabel", {
+    Create("TextLabel", {
         Parent = tbFrame,
         Position = UDim2.new(0, 12, 0, 8),
         Size = UDim2.new(1, -24, 0, 16),
@@ -1047,7 +1056,7 @@ local function AddTextbox(parent, title, placeholder, default, callback)
         ClearTextOnFocus = false,
     })
     RoundCorners(InputBox, 4)
-    InputBox.Padding = Create("UIPadding", {
+    local inputPadding = Create("UIPadding", {
         Parent = InputBox,
         PaddingLeft = UDim.new(0, 8),
         PaddingRight = UDim.new(0, 8),
@@ -1065,39 +1074,13 @@ local function AddTextbox(parent, title, placeholder, default, callback)
     }
 end
 
-local function AddLabel(parent, text, size)
-    local label = Create("TextLabel", {
-        Parent = parent,
-        Size = UDim2.new(1, 0, 0, size or 20),
-        Text = text,
-        TextColor3 = Colors.Text,
-        Font = Enum.Font.Gotham,
-        TextSize = 12,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        BackgroundTransparency = 1,
-        ZIndex = 1002,
-    })
-    return label
-end
-
-local function AddSeparator(parent)
-    local sep = Create("Frame", {
-        Parent = parent,
-        Size = UDim2.new(1, 0, 0, 1),
-        BackgroundColor3 = Colors.Border,
-        BorderSizePixel = 0,
-        ZIndex = 1001,
-    })
-    return sep
-end
-
 --====[ WATERMARK ]====--
 local Watermark = Create("TextLabel", {
     Parent = TargetParent,
     AnchorPoint = Vector2.new(0, 1),
     Position = UDim2.new(0, 10, 1, -10),
     Size = UDim2.new(0, 200, 0, 20),
-    Text = "NEXUS HUB v2.0 | Evade",
+    Text = "NEXUS HUB v2.0",
     TextColor3 = Colors.Accent,
     Font = Enum.Font.GothamBold,
     TextSize = 11,
@@ -1106,7 +1089,6 @@ local Watermark = Create("TextLabel", {
     ZIndex = 10000,
 })
 
--- Animate watermark opacity
 task.spawn(function()
     while task.wait(2) do
         for i = 0.3, 1, 0.05 do
@@ -1122,7 +1104,7 @@ task.spawn(function()
     end
 end)
 
---====[ SAMPLE CONTENT - BUILD TABS ]====--
+--====[ BUILD TABS ]====--
 
 -- TAB 1: Combat
 local CombatTab = AddTab("Combat", "⚔")
@@ -1238,19 +1220,7 @@ AddButton(SettingsTab.Content, "Server Hop", "Jumps to another server", function
     Notify("Settings", "Searching for server...", 2)
 end)
 
--- Open animation
-Hub.Size = UDim2.new(0, 0, 0, 0)
-Hub.Position = UDim2.new(0.5, 0, 0.5, 0)
-Hub.Visible = true
-
-task.wait(0.05)
-TweenService:Create(Hub, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-    Size = UDim2.new(0, 680, 0, 440),
-    Position = UDim2.new(0.5, -340, 0.5, -220),
-}):Play()
-
 -- Default to first tab
-task.wait(0.3)
 if #Tabs > 0 then
     SwitchTab(Tabs[1])
 end
@@ -1262,17 +1232,17 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.LeftControl then
         if Hub.Visible then
+            hubVisibleState = false
             TweenService:Create(Hub, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
                 Size = UDim2.new(0, 0, 0, 0),
-                Position = UDim2.new(0.5, 0, 0.5, 0),
             }):Play()
             task.wait(0.3)
             Hub.Visible = false
         else
             Hub.Visible = true
+            hubVisibleState = true
             TweenService:Create(Hub, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, 680, 0, 440),
-                Position = UDim2.new(0.5, -340, 0.5, -220),
+                Size = HubOriginalSize,
             }):Play()
         end
     end
